@@ -1,0 +1,25 @@
+{
+  "name": "file-system",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "concurrently \"npm --prefix backend run dev\" \"npm --prefix frontend run dev\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/elmerdotdev/ciccc-node-js-file-system-code-along-e0525.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/elmerdotdev/ciccc-node-js-file-system-code-along-e0525/issues"
+  },
+  "homepage": "https://github.com/elmerdotdev/ciccc-node-js-file-system-code-along-e0525#readme",
+  "dependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

@@ -1,100 +1,100 @@
-import http from 'http'     // Import http module
-import fs from 'fs'         // Import filesystem module
-import path from 'path'     // Import path module
-import dotenv from 'dotenv' // Import dotenv package
-dotenv.config()             // Read the .env file
+import http from 'http'
+import dotenv from 'dotenv'
+dotenv.config()
 
-const FILE_PATH = path.join(__dirname, '../docs', 'sample.txt')
+import { addFile, deleteFile, listFiles, readFile } from './lib/functions'
 
 const server = http.createServer((
   req: http.IncomingMessage,
   res: http.ServerResponse
 ) => {
-  fs.appendFile('./log.txt', `[${new Date()}] ${req.url} ${req.method}\r\n`, (err) => {
-    if (err) {
-      console.error(err)
-      return
-    }
-    console.log("Updated log...")
-  })
+  // Set Headers
+  res.setHeader('Access-Control-Allow-Origin', '*')
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-type')
+
+  // Pre-flight Check
+  if (req.method === "OPTIONS") {
+    res.writeHead(200)
+    res.end()
+    return
+  }
+
+  const myUrl = new URL(req.url || '', `http://${req.headers.host}`)
+  const parsedPath = myUrl.pathname
+  const fileName = myUrl.searchParams.get('filename')
 
   // Home
-  if (req.url === "/" && req.method === "GET") {
+  if (parsedPath === "/" && req.method === "GET") {
     res.writeHead(200, { "content-type": "text/plain" })
     res.end("Welcome to my server")
     return
   }
 
-  // Read file
-  if (req.url === "/read" && req.method === "GET") {
-    fs.readFile(FILE_PATH, 'utf8', (err, data) => {
-      if (err) {
-        res.writeHead(500, { "content-type": "text/plain" })
-        res.end(`Error reading file. Please contact system admin.`)
-        console.error(err)
+  // List files
+  if (parsedPath === "/list" && req.method === "GET") {
+    listFiles().then(files => {
+      res.writeHead(200, { "content-type": "application/json" })
+      res.end(JSON.stringify(files))
+    }).catch(err => {
+      console.error(err)
+      res.writeHead(404, { "content-type": "text/plain" })
+      res.end("Files not found")
+    })
+    return
+  }
+
+  // Read a file (http://localhost:3500/read?filename=txt1.txt)
+  if (parsedPath === "/read" && fileName && req.method === "GET") {
+    readFile(fileName).then(data => {
+      if (!data) {
+        res.writeHead(404, { "content-type": "text/plain" })
+        res.end("Invalid file")
         return
       }
-      res.writeHead(200, { "content-type": "text/plain" })
-      res.end(data || "File is empty")
+      res.writeHead(200, { "content-type": "application/json" })
+      res.end(JSON.stringify(data))
+    }).catch(err => {
+      console.error(err)
+      res.writeHead(500, { "content-type": "text/plain" })
+      res.end("Cannot read file.")
     })
     return
   }
 
-  // Add or overwrite
-  if (req.url === "/add" && req.method === "POST") {
-    let body = "" // final data container
+  // Add a file
+  if (parsedPath === "/add" && req.method === "POST") {
+    let body = ''
     req.on("data", chunk => body += chunk)
-    req.on("end", () => {
-      fs.writeFile(FILE_PATH, body, (err) => {
-        if (err) {
-          res.writeHead(500, { "content-type": "text/plain" })
-          res.end(`Unable to write file.`)
-          console.error(err)
-          return
-        }
-        res.writeHead(201, { "content-type": "text/plain" })
-        res.end("Successfully wrote file")
-      })
-    })
-    return
-  }
-
-  // Update (append)
-  if (req.url === "/update" && req.method === "PATCH") {
-    let body = ""
-    req.on("data", chunk => body += chunk)
-    req.on("end", () => {
-      fs.appendFile(FILE_PATH, "\r\n" + body, (err) => {
-        if (err) {
-          res.writeHead(500, { "content-type": "text/plain" })
-          res.end(`Unable to update file.`)
-          console.error(err)
-          return
-        }
-        res.writeHead(201, { "content-type": "text/plain" })
-        res.end("Successfully updated file")
-      })
-    })
-    return
-  }
-
-  // Delete
-  if (req.url === "/delete" && req.method === "DELETE") {
-    fs.unlink(FILE_PATH, (err) => {
-      if (err) {
-        res.writeHead(500, { "content-type": "text/plain" })
-        res.end(`Unable to delete file.`)
-        console.error(err)
+    req.on("end", async() => {
+      const { filename, fileContent } = JSON.parse(body)
+      const success = await addFile(filename, fileContent)
+      if (!success) {
+        res.writeHead(500, { "content-type": "application/json" })
+        res.end(JSON.stringify({ message: "Unable to add file." }))
         return
       }
-      res.writeHead(200, { "content-type": "text/plain" })
-      res.end("Successfully deleted file")
+      res.writeHead(201, { "content-type": "application/json" })
+      res.end(JSON.stringify({ message: "File added successfully" }))
+    })
+    return
+  }
+
+  // Delete a file
+  if (parsedPath === "/delete" && fileName && req.method === "DELETE") {
+    deleteFile(fileName).then(file => {
+      res.writeHead(200, { "content-type": "application/json" })
+      res.end(JSON.stringify({file}))
+    }).catch(err => {
+      console.error(err)
+      res.writeHead(500, { "content-type": "text/plain" })
+      res.end("Unable to delete file")
     })
     return
   }
 
   // Fallback
-  res.writeHead(404, { "Content-type": "text/plain" })
+  res.writeHead(404, { "content-type": "text/plain" })
   res.end("Invalid route")
   return
 })

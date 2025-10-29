@@ -5,6 +5,7 @@
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "dev-callback": "concurrently \"npx tsc -w\" \"nodemon dist/server-callback.js\"",
     "dev": "concurrently \"npx tsc -w\" \"nodemon dist/server.js\""
   },
   "keywords": [],
