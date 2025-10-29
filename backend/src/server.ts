@@ -30,7 +30,8 @@ const server = http.createServer((
     fs.readFile(FILE_PATH, 'utf8', (err, data) => {
       if (err) {
         res.writeHead(500, { "content-type": "text/plain" })
-        res.end(`Error reading file: ${err}`)
+        res.end(`Error reading file. Please contact system admin.`)
+        console.error(err)
         return
       }
       res.writeHead(200, { "content-type": "text/plain" })
@@ -47,7 +48,8 @@ const server = http.createServer((
       fs.writeFile(FILE_PATH, body, (err) => {
         if (err) {
           res.writeHead(500, { "content-type": "text/plain" })
-          res.end(`Unable to write file: ${err}`)
+          res.end(`Unable to write file.`)
+          console.error(err)
           return
         }
         res.writeHead(201, { "content-type": "text/plain" })
@@ -65,7 +67,8 @@ const server = http.createServer((
       fs.appendFile(FILE_PATH, "\r\n" + body, (err) => {
         if (err) {
           res.writeHead(500, { "content-type": "text/plain" })
-          res.end(`Unable to update file: ${err}`)
+          res.end(`Unable to update file.`)
+          console.error(err)
           return
         }
         res.writeHead(201, { "content-type": "text/plain" })
@@ -80,7 +83,8 @@ const server = http.createServer((
     fs.unlink(FILE_PATH, (err) => {
       if (err) {
         res.writeHead(500, { "content-type": "text/plain" })
-        res.end(`Unable to delete: ${err}`)
+        res.end(`Unable to delete file.`)
+        console.error(err)
         return
       }
       res.writeHead(200, { "content-type": "text/plain" })
