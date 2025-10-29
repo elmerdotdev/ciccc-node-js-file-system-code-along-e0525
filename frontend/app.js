@@ -35,12 +35,15 @@ const addFile = async(filename, fileContent) => {
 
 // Delete file
 const deleteFile = async(filename) => {
-  const res = await fetch(`${BACKEND_URL}/delete?filename=${filename}`, {
-    method: "DELETE"
-  })
-  const data = await res.json()
-  console.log(data)
-  build() // Rebuild list
+  const response = confirm("Are you sure you want to delete?")
+  if (response) {
+    const res = await fetch(`${BACKEND_URL}/delete?filename=${filename}`, {
+      method: "DELETE"
+    })
+    const data = await res.json()
+    console.log(data)
+    build() // Rebuild list
+  }
 }
 
 // Form submit
